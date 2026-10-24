@@ -6,7 +6,7 @@ import { isSameOrigin, getIp } from "@/lib/origin";
 import { isBlocked, recordHit, clearHits } from "@/lib/rateLimit";
 
 const WINDOW_MS = 15 * 60 * 1000;
-const MAX_FAILURES = 5;
+const MAX_FAILURES = 10;
 
 function genericFailure() {
   return Response.json({ error: "Email or password is incorrect." }, { status: 401 });

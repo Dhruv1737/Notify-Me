@@ -4,6 +4,8 @@ import { hashPassword } from "@/lib/password";
 import { isSameOrigin, getIp } from "@/lib/origin";
 import { isBlocked, recordHit } from "@/lib/rateLimit";
 import { randomToken, hashToken } from "@/lib/tokens";
+import { sendEmail } from "@/lib/email";
+import { verifyEmail, accountExistsEmail } from "@/lib/emailTemplates";
 
 const SAME_REPLY = {
   message: "If this email can be used, we have sent a link to verify it.",
@@ -42,8 +44,12 @@ export async function POST(request) {
   const existing = await prisma.user.findUnique({ where: { email } });
 
   if (existing) {
-    // Phase 2: email the real owner that an account already exists.
-    console.log(`[dev] signup attempt for existing account: ${email}`);
+    try {
+      const msg = accountExistsEmail(`${process.env.APP_URL}/login`);
+      await sendEmail({ to: email, ...msg });
+    } catch (err) {
+      console.error("Email failed:", err.message);
+    }
     return Response.json(SAME_REPLY);
   }
 
@@ -59,8 +65,12 @@ export async function POST(request) {
     },
   });
 
-  // Phase 2: send this by email. For now, print it in the terminal.
-  console.log(`[dev] verify link: http://localhost:3000/verify?token=${token}`);
+  try {
+    const msg = verifyEmail(`${process.env.APP_URL}/verify?token=${token}`);
+    await sendEmail({ to: email, ...msg });
+  } catch (err) {
+    console.error("Email failed:", err.message);
+  }
 
   return Response.json(SAME_REPLY);
 }

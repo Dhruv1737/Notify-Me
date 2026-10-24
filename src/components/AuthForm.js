@@ -83,6 +83,11 @@ export default function AuthForm({ mode }) {
           <>No account yet? <Link href="/signup">Sign up</Link></>
         )}
       </p>
+            {!isSignup && (
+        <p className="muted">
+          <Link href="/forgot-password">Forgot password?</Link>
+        </p>
+      )}
     </main>
   );
 }

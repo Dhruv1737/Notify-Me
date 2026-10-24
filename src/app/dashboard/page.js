@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+    if (!user.verifiedAt) redirect("/check-inbox");
 
   return (
     <>
