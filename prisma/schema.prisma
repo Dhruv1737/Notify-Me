@@ -54,3 +54,55 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+  watches      Watch[]
+
+
+  enum WatchStatus {
+  PENDING
+  ACTIVE
+  ERROR
+  PAUSED
+}
+
+enum AlertMode {
+  PAGE_CHANGES
+  NEW_LINE_KEYWORDS
+  KEYWORDS_APPEAR
+  KEYWORDS_DISAPPEAR
+}
+
+enum MatchMode {
+  ANY
+  ALL
+}
+
+model Watch {
+  id              String      @id @default(cuid())
+  userId          String
+  url             String
+  name            String?
+  selector        String?
+  intervalMinutes Int         @default(60)
+  status          WatchStatus @default(PENDING)
+
+  alertsEnabled   Boolean     @default(true)
+  alertMode       AlertMode   @default(PAGE_CHANGES)
+  keywords        String[]
+  matchMode       MatchMode   @default(ANY)
+  keywordState    Boolean?
+
+  failureCount    Int         @default(0)
+  lastError       String?
+  lastCheckedAt   DateTime?
+  nextCheckAt     DateTime    @default(now())
+  lastChangedAt   DateTime?
+  lastAlertAt     DateTime?
+  lockedUntil     DateTime?
+  createdAt       DateTime    @default(now())
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status, nextCheckAt])
+}
