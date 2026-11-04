@@ -16,3 +16,12 @@ export const resetSchema = z.object({
   token: z.string().min(10).max(200),
   password,
 });
+
+export const patchWatchSchema = z
+  .object({
+    action: z.enum(["pause", "resume"]).optional(),
+    alertsEnabled: z.boolean().optional(),
+  })
+  .refine((d) => d.action !== undefined || d.alertsEnabled !== undefined, {
+    message: "Nothing to change.",
+  });

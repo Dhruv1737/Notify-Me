@@ -12,6 +12,7 @@ model User {
   createdAt    DateTime     @default(now())
   sessions     Session[]
   emailTokens  EmailToken[]
+  watches      Watch[]
 }
 
 model Session {
@@ -55,7 +56,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-  watches      Watch[]
 
 
   enum WatchStatus {
