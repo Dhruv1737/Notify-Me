@@ -78,3 +78,35 @@ button.plain:hover { background: var(--surface); }
 }
 .header .brand { font-weight: 600; }
 .header .right { display: flex; align-items: center; gap: 12px; font-size: var(--text-sm); color: var(--muted); }
+
+select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+textarea { resize: vertical; min-height: 72px; }
+
+input[type="checkbox"] { width: auto; margin-right: 8px; }
+.check { display: flex; align-items: center; color: var(--text); font-size: var(--text-base); }
+
+.row { display: flex; gap: 8px; }
+.row button { white-space: nowrap; }
+
+details.options { margin: 16px 0 32px; }
+details.options summary { cursor: pointer; color: var(--muted); font-size: var(--text-sm); margin-bottom: 16px; }
+
+.watch { padding: 16px 0; border-top: 1px solid var(--border); }
+.watch:last-child { border-bottom: 1px solid var(--border); }
+.watch-title { font-weight: 600; word-break: break-all; }
+.watch-meta { color: var(--muted); font-size: var(--text-sm); margin: 4px 0 12px; word-break: break-all; }
+.watch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.watch-actions button { padding: 6px 12px; font-size: var(--text-sm); }
+
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--muted); }
+.dot.active { background: var(--accent); }
+.dot.error { background: var(--danger); }
+.dot.pending { background: #c9b98a; }
