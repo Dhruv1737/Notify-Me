@@ -19,3 +19,8 @@ export function containsKeywords(text, keywords, matchMode) {
   const found = matchedKeywords(text, keywords);
   return matchMode === "ALL" ? found.length === keywords.length : found.length > 0;
 }
+
+// Lines that contain the keywords. With ALL, a single line must hold every keyword.
+export function matchingLines(lines, keywords, matchMode) {
+  return lines.filter((line) => containsKeywords(line, keywords, matchMode));
+}

@@ -134,6 +134,7 @@ model Change {
   added           String[]
   removed         String[]
   truncated       Boolean   @default(false)
+  alertable       Boolean   @default(false)
   matchedKeywords String[]
   matchedLines    String[]
   emailedAt       DateTime?

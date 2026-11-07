@@ -3,6 +3,7 @@ import { fetchPage, FetchError } from "./fetcher.js";
 import { extractText, isLowContent, CleanError } from "./cleaner.js";
 import { nextCheckTime } from "./schedule.js";
 import { diffText } from "./differ.js";
+import { decideAlert } from "./alertDecision.js";
 import {
   sha256,
   keywordStateFor,
@@ -76,14 +77,28 @@ async function recordSuccess(watch, text, statusCode, durationMs) {
 
   // CPU work happens before the transaction, so the database is not held open.
   const diff = changed ? diffText(last.content, text) : null;
+  const decision = changed
+    ? decideAlert({
+        alertMode: watch.alertMode,
+        alertsEnabled: watch.alertsEnabled,
+        keywords: watch.keywords,
+        matchMode: watch.matchMode,
+        previousState: watch.keywordState,
+        oldText: last.content,
+        newText: text,
+        addedLines: diff.addedAll,
+      })
+    : null;
 
   const data = {
     status: "ACTIVE",
     failureCount: 0,
     lastError: null,
     warning: isLowContent(text) ? LOW_CONTENT_WARNING : null,
-    // At the baseline this is the silent starting value. Alerts come in Phase 5.
-    keywordState: keywordStateFor(watch.alertMode, watch.keywords, watch.matchMode, text),
+    // Baseline: the silent starting value. Later: the new state, used for the next flip.
+    keywordState: decision
+      ? decision.keywordState
+      : keywordStateFor(watch.alertMode, watch.keywords, watch.matchMode, text),
     lastCheckedAt: now,
     nextCheckAt: nextCheckTime(watch.intervalMinutes, now),
     lockedUntil: null,
@@ -116,6 +131,9 @@ async function recordSuccess(watch, text, statusCode, durationMs) {
           added: diff.added,
           removed: diff.removed,
           truncated: diff.truncated,
+          alertable: decision.alertable,
+          matchedKeywords: decision.matchedKeywords,
+          matchedLines: decision.matchedLines,
         },
       });
     }
@@ -127,9 +145,10 @@ async function recordSuccess(watch, text, statusCode, durationMs) {
     if (snapshot) await pruneSnapshots(tx, watch.id);
 
     if (isBaseline) return `baseline saved (${text.length} characters)`;
-    return changed
-      ? `changed (+${diff.totalAdded} / -${diff.totalRemoved} lines${diff.truncated ? ", cut short" : ""})`
-      : "unchanged";
+    if (!changed) return "unchanged";
+    const cut = diff.truncated ? ", cut short" : "";
+    const alert = decision.alertable ? "alert due" : "no alert";
+    return `changed (+${diff.totalAdded} / -${diff.totalRemoved} lines${cut}, ${alert})`;
   }, TX_OPTIONS);
 }
 
