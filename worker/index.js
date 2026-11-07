@@ -2,6 +2,7 @@ import "dotenv/config";
 import { prisma } from "../src/lib/db.js";
 import { runDueChecks } from "./scheduler.js";
 import { sendDueAlerts } from "./notifier.js";
+import { sendErrorAlerts } from "./errorNotifier.js";
 
 const TICK_MS = 10 * 1000;
 let stopping = false;
@@ -22,6 +23,12 @@ async function main() {
       await sendDueAlerts(() => stopping);
     } catch (err) {
       console.error("[worker] alerts failed:", err.message);
+    }
+
+    try {
+      await sendErrorAlerts(() => stopping);
+    } catch (err) {
+      console.error("[worker] error alerts failed:", err.message);
     }
 
     // Sleep in short steps so Ctrl+C is answered quickly.

@@ -99,6 +99,7 @@ model Watch {
   nextCheckAt     DateTime    @default(now())
   lastChangedAt   DateTime?
   lastAlertAt     DateTime?
+  errorNotifiedAt DateTime?
   lockedUntil     DateTime?
   createdAt       DateTime    @default(now())
 

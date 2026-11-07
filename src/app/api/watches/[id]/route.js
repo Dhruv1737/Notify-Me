@@ -50,6 +50,7 @@ export async function PATCH(request, { params }) {
     update.nextCheckAt = new Date();
     update.failureCount = 0;
     update.lastError = null;
+    update.errorNotifiedAt = null;
   }
 
   const result = await prisma.watch.updateMany({
