@@ -57,6 +57,14 @@ export async function PATCH(request, { params }) {
     data: update,
   });
   if (result.count === 0) return NOT_FOUND();
+    if (alertsEnabled === false) {
+    // Changes waiting for an email will never be sent. They stay saved,
+    // and show as "no alert sent".
+    await prisma.change.updateMany({
+      where: { watchId: id, alertable: true, emailedAt: null },
+      data: { alertable: false },
+    });
+  }
 
   const watch = await prisma.watch.findFirst({ where: { id, userId: user.id } });
   return Response.json({ watch });
