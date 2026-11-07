@@ -2,11 +2,11 @@ import { prisma } from "../src/lib/db.js";
 import { fetchPage, FetchError } from "./fetcher.js";
 import { extractText, isLowContent, CleanError } from "./cleaner.js";
 import { nextCheckTime } from "./schedule.js";
+import { diffText } from "./differ.js";
 import {
   sha256,
   keywordStateFor,
   afterFailure,
-  MAX_FAILURES,
   LOW_CONTENT_WARNING,
 } from "./checkLogic.js";
 
@@ -69,10 +69,13 @@ async function recordSuccess(watch, text, statusCode, durationMs) {
   const last = await prisma.snapshot.findFirst({
     where: { watchId: watch.id },
     orderBy: { createdAt: "desc" },
-    select: { id: true, hash: true },
+    select: { id: true, hash: true, content: true },
   });
   const isBaseline = !last;
   const changed = !!last && last.hash !== hash;
+
+  // CPU work happens before the transaction, so the database is not held open.
+  const diff = changed ? diffText(last.content, text) : null;
 
   const data = {
     status: "ACTIVE",
@@ -105,9 +108,15 @@ async function recordSuccess(watch, text, statusCode, durationMs) {
     }
 
     if (changed) {
-      // Step 5 fills in the added and removed lines here.
       await tx.change.create({
-        data: { watchId: watch.id, fromSnapshotId: last.id, toSnapshotId: snapshot.id },
+        data: {
+          watchId: watch.id,
+          fromSnapshotId: last.id,
+          toSnapshotId: snapshot.id,
+          added: diff.added,
+          removed: diff.removed,
+          truncated: diff.truncated,
+        },
       });
     }
 
@@ -118,7 +127,9 @@ async function recordSuccess(watch, text, statusCode, durationMs) {
     if (snapshot) await pruneSnapshots(tx, watch.id);
 
     if (isBaseline) return `baseline saved (${text.length} characters)`;
-    return changed ? "changed" : "unchanged";
+    return changed
+      ? `changed (+${diff.totalAdded} / -${diff.totalRemoved} lines${diff.truncated ? ", cut short" : ""})`
+      : "unchanged";
   }, TX_OPTIONS);
 }
 
