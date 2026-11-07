@@ -45,7 +45,8 @@ export async function PATCH(request, { params }) {
     update.status = "PAUSED";
   }
   if (action === "resume") {
-    update.status = existing.lastCheckedAt ? "ACTIVE" : "PENDING";
+    const baselines = await prisma.snapshot.count({ where: { watchId: id } });
+    update.status = baselines > 0 ? "ACTIVE" : "PENDING";
     update.nextCheckAt = new Date();
     update.failureCount = 0;
     update.lastError = null;
