@@ -13,6 +13,24 @@ function Time({ date }) {
   return date ? <LocalTime iso={date.toISOString()} /> : "Not yet";
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// What happened with the email for one change.
+function alertStatus(change, mode) {
+  if (change.emailedAt) return { text: "Email sent", time: change.emailedAt };
+  if (change.alertable) {
+    return Date.now() - change.createdAt.getTime() > DAY_MS
+      ? { text: "No alert sent. The email could not be delivered in time." }
+      : { text: "Email waiting to be sent (at most one email every 15 minutes)" };
+  }
+  return {
+    text:
+      mode === "PAGE_CHANGES"
+        ? "No alert sent. Emails were off."
+        : "No alert sent. Emails were off, or the change did not match your keywords.",
+  };
+}
+
 export default async function WatchPage({ params }) {
   const { id } = await params;
 
@@ -62,6 +80,7 @@ export default async function WatchPage({ params }) {
 
         <dl className="facts">
           <div><dt>Address</dt><dd>{watch.url}</dd></div>
+          <div><dt>Last email</dt><dd><Time date={watch.lastAlertAt} /></dd></div>
           <div>
             <dt>Status</dt>
             <dd>
@@ -91,19 +110,36 @@ export default async function WatchPage({ params }) {
 
         <WatchControls id={watch.id} status={watch.status} alertsEnabled={watch.alertsEnabled} />
 
-        <section className="section">
-          <h2>Saved text</h2>
-          {snapshot ? (
-            <>
-              <p className="muted">Taken <Time date={snapshot.createdAt} /></p>
-              <pre className="snapshot">{shownText}</pre>
-            </>
-          ) : (
+                <section className="section">
+          <h2>Changes</h2>
+          {changes.length === 0 ? (
             <p className="muted">
-              {watch.status === "PENDING"
-                ? "Taking the first snapshot."
-                : "There is no saved text yet."}
+              {snapshot ? "No changes since the first snapshot." : "Waiting for the first snapshot."}
             </p>
+          ) : (
+            changes.map((c) => {
+              const alert = alertStatus(c, watch.alertMode);
+              return (
+                <div className="change" key={c.id}>
+                  <p className="muted">
+                    <Time date={c.createdAt} />
+                    {" · "}
+                    {alert.text}
+                    {alert.time && <> · <Time date={alert.time} /></>}
+                  </p>
+                  {c.matchedKeywords.length > 0 && (
+                    <p className="muted">Matched: {c.matchedKeywords.join(", ")}</p>
+                  )}
+                  {c.removed.map((line, i) => (
+                    <div className="diff-line remove" key={`r${i}`}>− {line}</div>
+                  ))}
+                  {c.added.map((line, i) => (
+                    <div className="diff-line add" key={`a${i}`}>+ {line}</div>
+                  ))}
+                  {c.truncated && <p className="muted">Only the first 200 lines are shown.</p>}
+                </div>
+              );
+            })
           )}
         </section>
 
