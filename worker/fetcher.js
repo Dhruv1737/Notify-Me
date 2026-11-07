@@ -172,4 +172,11 @@ export function createFetcher({
   };
 }
 
-export const fetchPage = createFetcher();
+// Load testing only: lets the worker fetch a dummy server on this machine.
+// Ignored when NODE_ENV is "production".
+const loadTest = process.env.LOAD_TEST === "1" && process.env.NODE_ENV !== "production";
+if (loadTest) console.warn("[worker] LOAD_TEST is on: private addresses are allowed");
+
+export const fetchPage = loadTest
+  ? createFetcher({ checkUrl: async (url) => ({ ok: true, url }), agent: new Agent() })
+  : createFetcher();

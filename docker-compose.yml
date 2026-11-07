@@ -1,0 +1,61 @@
+x-app: &app
+  build: .
+  image: change-detector:local
+  restart: unless-stopped
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: postgresql://cd:cd@db:5432/changedetector
+    APP_URL: ${APP_URL:-http://localhost:3000}
+    SMTP_HOST: ${SMTP_HOST:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    SMTP_USER: ${SMTP_USER:-}
+    SMTP_PASS: ${SMTP_PASS:-}
+    EMAIL_FROM: ${EMAIL_FROM:-Change Detector <noreply@localhost>}
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cd
+      POSTGRES_PASSWORD: cd
+      POSTGRES_DB: changedetector
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cd -d changedetector"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    <<: *app
+    restart: "no"
+    command: ["npx", "prisma", "migrate", "deploy"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["npm", "run", "worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
