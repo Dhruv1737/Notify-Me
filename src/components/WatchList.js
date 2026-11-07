@@ -1,29 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-const STATUS = {
-  PENDING: { label: "Pending", cls: "pending" },
-  ACTIVE: { label: "Active", cls: "active" },
-  ERROR: { label: "Error", cls: "error" },
-  PAUSED: { label: "Paused", cls: "" },
-};
-
-const INTERVAL_LABEL = {
-  5: "every 5 minutes",
-  15: "every 15 minutes",
-  60: "every hour",
-  360: "every 6 hours",
-  1440: "every day",
-};
-
-const MODE_LABEL = {
-  PAGE_CHANGES: "page changes",
-  NEW_LINE_KEYWORDS: "new line has keywords",
-  KEYWORDS_APPEAR: "keywords appear",
-  KEYWORDS_DISAPPEAR: "keywords disappear",
-};
+import { STATUS, INTERVAL_LABEL, MODE_LABEL } from "@/lib/watchLabels";
 
 export default function WatchList({ watches }) {
   const router = useRouter();
@@ -69,13 +49,16 @@ export default function WatchList({ watches }) {
         const busy = busyId === w.id;
         return (
           <div className="watch" key={w.id}>
-            <div className="watch-title">{w.name || w.url}</div>
+            <div className="watch-title">
+              <Link href={`/watches/${w.id}`}>{w.name || w.url}</Link>
+            </div>
             <div className="watch-meta">
               {w.name && <>{w.url}<br /></>}
               <span className={`dot ${s.cls}`} />{s.label}
               {w.status === "PENDING" && " · Taking the first snapshot"}
               {" · "}{INTERVAL_LABEL[w.intervalMinutes] || `${w.intervalMinutes} minutes`}
               {" · "}{w.alertsEnabled ? `Email when ${MODE_LABEL[w.alertMode]}` : "Emails off"}
+              {w.status === "ERROR" && w.lastError && <><br />{w.lastError}</>}
             </div>
             <div className="watch-actions">
               <button

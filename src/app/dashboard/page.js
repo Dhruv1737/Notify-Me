@@ -25,6 +25,7 @@ export default async function DashboardPage() {
     intervalMinutes: w.intervalMinutes,
     alertsEnabled: w.alertsEnabled,
     alertMode: w.alertMode,
+    lastError: w.lastError,
   }));
 
   return (
