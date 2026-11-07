@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint",
-  "test": "vitest run",
-  "worker": "node worker/index.js"
-},
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "worker": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON worker/index.js"
+  },
   "dependencies": {
     "@prisma/client": "6.19.3",
     "bcryptjs": "3.0.3",
@@ -24,6 +24,7 @@
     "prisma": "6.19.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "undici": "8.12.4",
     "zod": "4.6.7"
   },
   "devDependencies": {

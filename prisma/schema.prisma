@@ -94,6 +94,7 @@ model Watch {
 
   failureCount    Int         @default(0)
   lastError       String?
+  warning         String?
   lastCheckedAt   DateTime?
   nextCheckAt     DateTime    @default(now())
   lastChangedAt   DateTime?
@@ -102,7 +103,61 @@ model Watch {
   createdAt       DateTime    @default(now())
 
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshots       Snapshot[]
+  changes         Change[]
+  checkLogs       CheckLog[]
 
   @@index([userId])
   @@index([status, nextCheckAt])
+}
+
+
+model Snapshot {
+  id          String   @id @default(cuid())
+  watchId     String
+  content     String
+  hash        String
+  createdAt   DateTime @default(now())
+
+  watch       Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  changesFrom Change[] @relation("ChangeFrom")
+  changesTo   Change[] @relation("ChangeTo")
+
+  @@index([watchId, createdAt])
+}
+
+model Change {
+  id              String    @id @default(cuid())
+  watchId         String
+  fromSnapshotId  String?
+  toSnapshotId    String?
+  added           String[]
+  removed         String[]
+  truncated       Boolean   @default(false)
+  matchedKeywords String[]
+  matchedLines    String[]
+  emailedAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  watch           Watch     @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  fromSnapshot    Snapshot? @relation("ChangeFrom", fields: [fromSnapshotId], references: [id], onDelete: SetNull)
+  toSnapshot      Snapshot? @relation("ChangeTo", fields: [toSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([watchId, createdAt])
+}
+
+model CheckLog {
+  id         String   @id @default(cuid())
+  watchId    String
+  checkedAt  DateTime @default(now())
+  success    Boolean
+  statusCode Int?
+  durationMs Int
+  changed    Boolean  @default(false)
+  error      String?
+
+  watch      Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@index([watchId, checkedAt])
+  @@index([checkedAt])
 }
