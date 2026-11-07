@@ -18,7 +18,10 @@ function getTransporter() {
 
 export async function sendEmail({ to, subject, text }) {
   const t = getTransporter();
-  if (!t) {
+    if (!t) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SMTP is not configured.");
+    }
     console.log(`[dev email] to: ${to}\nsubject: ${subject}\n${text}\n`);
     return;
   }

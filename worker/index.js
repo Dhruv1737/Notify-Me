@@ -1,11 +1,14 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/db.js";
-import { runDueChecks } from "./scheduler.js";
+import { runDueChecks, BATCH } from "./scheduler.js";
 import { sendDueAlerts } from "./notifier.js";
 import { sendErrorAlerts } from "./errorNotifier.js";
+import { runCleanup } from "./cleanup.js";
+import { CLEANUP_EVERY_MS } from "./cleanupRules.js";
 
 const TICK_MS = 10 * 1000;
 let stopping = false;
+let lastCleanup = 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -13,8 +16,11 @@ async function main() {
   console.log("[worker] started");
 
   while (!stopping) {
+    let backlog = false;
+
     try {
-      await runDueChecks(() => stopping);
+      const found = await runDueChecks(() => stopping);
+      backlog = found >= BATCH;
     } catch (err) {
       console.error("[worker] checks failed:", err.message);
     }
@@ -30,6 +36,18 @@ async function main() {
     } catch (err) {
       console.error("[worker] error alerts failed:", err.message);
     }
+
+    if (Date.now() - lastCleanup >= CLEANUP_EVERY_MS) {
+      lastCleanup = Date.now();
+      try {
+        await runCleanup();
+      } catch (err) {
+        console.error("[worker] cleanup failed:", err.message);
+      }
+    }
+
+    // A full batch means more watches are waiting: go straight on.
+    if (backlog) continue;
 
     // Sleep in short steps so Ctrl+C is answered quickly.
     for (let waited = 0; waited < TICK_MS && !stopping; waited += 500) {

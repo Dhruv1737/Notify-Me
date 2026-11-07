@@ -3,7 +3,7 @@ import { checkWatch } from "./checkWatch.js";
 import { nextCheckTime } from "./schedule.js";
 
 const LOCK_MS = 2 * 60 * 1000; 
-const BATCH = 20;
+export const BATCH = 20;
 
 async function claimWatch(id) {
   const now = new Date();
@@ -44,4 +44,5 @@ export async function runDueChecks(shouldStop) {
       });
     }
   }
+    return due.length;
 }
