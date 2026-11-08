@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "worker": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON worker/index.js"
+    "worker": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON worker/index.js",
+    "tick": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON worker/once.js"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
