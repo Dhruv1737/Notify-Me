@@ -76,7 +76,7 @@ export default function WatchForm() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
+        <form className="watch-form" onSubmit={onSubmit}>
       <div className="row">
         <input
           type="text"
