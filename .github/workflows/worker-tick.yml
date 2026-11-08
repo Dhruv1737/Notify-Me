@@ -1,35 +1,7 @@
-name: Worker tick
-
-on:
-  schedule:
-    - cron: "*/5 * * * *"
-  workflow_dispatch:
-
-# Never run two ticks at once.
-concurrency:
-  group: worker-tick
-  cancel-in-progress: false
-
 jobs:
   tick:
     runs-on: ubuntu-latest
+    environment: change-detector
     timeout-minutes: 8
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npm run tick
-        env:
-          NODE_ENV: production
-          APP_URL: ${{ secrets.APP_URL }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
