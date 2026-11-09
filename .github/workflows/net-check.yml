@@ -1,0 +1,21 @@
+name: Network check
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Address to test
+        required: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Try several client names
+        env:
+          URL: ${{ inputs.url }}
+        run: |
+          echo "$(curl -sS -o /dev/null --max-time 20 -w '%{http_code}' "$URL" || true)  curl default"
+          for ua in "ChangeDetectorBot/1.0" "ChangeDetector/1.0" "Mozilla/5.0 (compatible; ChangeDetector/1.0; +https://notify-me-five-alpha.vercel.app)"; do
+            echo "$(curl -sS -o /dev/null --max-time 20 -A "$ua" -w '%{http_code}' "$URL" || true)  $ua"
+          done
