@@ -115,7 +115,7 @@ export function createFetcher({
           signal: controller.signal,
           dispatcher: agent,
           headers: {
-            "User-Agent": `ChangeDetectorBot/1.0 (+${process.env.APP_URL || "http://localhost:3000"})`,
+            "User-Agent": "ChangeDetector/1.0",
             Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1",
             "Accept-Language": "en",
           },

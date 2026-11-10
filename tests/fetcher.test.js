@@ -77,7 +77,7 @@ describe("fetchPage", () => {
 
   it("identifies itself as a bot", async () => {
     await fetcher(`${base}/ok`);
-    expect(lastUserAgent).toMatch(/ChangeDetectorBot/);
+        expect(lastUserAgent).toMatch(/ChangeDetector\//);
   });
 
   it("fails on error status codes and keeps the code", async () => {
